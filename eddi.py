@@ -7,11 +7,21 @@ import datetime
 import time
 import paho.mqtt.publish as publish
 
-
 def publish_data(current_topic, powerTotal):
     print(current_topic, powerTotal)
     publish.single("myhome/eddi/" + current_topic, powerTotal, hostname="10.0.0.135")
-        
+
+def get_instant():
+    urlStatus = 'https://s6.myenergi.net/cgi-jstatus-E10225156'
+    r=requests.get(urlStatus, auth=HTTPDigestAuth('123456796', 'hel105'))
+    payload = r.json()
+    if "gen" in payload["eddi"][0]:
+        gen = payload["eddi"][0]["gen"]
+    else:
+        gen = 0
+    grd = payload["eddi"][0]["grd"]
+    publish_data("GridPower",grd)
+    publish_data("GeneratedPower",gen)
 
 while True:
 
@@ -58,5 +68,6 @@ while True:
     publish_data("Imported",f'{imported:9.2f}')
     publish_data("Boosted",f'{boosted:9.2f}')
 
+    get_instant()
 
     time.sleep(60)
